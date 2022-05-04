@@ -3,6 +3,7 @@ import requests
 
 from argparse import ArgumentParser
 
+RH_URL = 'releasehub-staging.cloud.chippercash.com'
 
 class HTTPCall:
 
@@ -22,12 +23,10 @@ class HTTPCall:
     def data(self, resp):
         return resp.json()
 
-    def status(self, resp):
-        return resp.status_code
 
 
 def core(handle):
-    url = f'https://core-{handle}.releasehub-staging.cloud.chippercash.com/v1/public/health'
+    url = f'https://core-{handle}.{RH_URL}/v1/public/health'
     obj = HTTPCall()
     resp = obj.get(url)
     return obj.data(resp)
@@ -36,12 +35,12 @@ def core(handle):
 def auth(handle, email):
     # Part 1
     obj = HTTPCall()
-    url = f'https://auth-{handle}.releasehub-staging.cloud.chippercash.com/otp/email'    
+    url = f'https://auth-{handle}.{RH_URL}/otp/email'    
     data_otp = {'emailAddress': email}
 
     # Part 2
-    if obj.post(url, data_otp) == 200:
-        url = f'https://auth-{handle}.releasehub-staging.cloud.chippercash.com/jwt?otp=111111'
+    if obj.post(url, data_otp).status_code == 200:
+        url = f'https://auth-{handle}.{RH_URL}/jwt?otp=111111'
         data = {'identifier': email, 'otpType': 'EMAIL'}
         resp = obj.post(url, data)
         return obj.data(resp)
@@ -53,14 +52,9 @@ def comp():
 
 
 if __name__ == "__main__":
-    # Steps:
-    #     1)hit RH endpoint
-    #     2)send otp email
-    #     3)process response
-    #     4)forward response to next/final POST
     # TODO: add Postgres checks AFTER fixing network accessibility
 
-    # Read RH environment handle
+    # Read arguments
     parser = ArgumentParser(description='ReleaseHub environment handle tests', add_help=True)
     required = parser.add_argument_group('required arguments')
     required.add_argument('--handle', '-a', dest='handle', help='input env handle', required=True)
